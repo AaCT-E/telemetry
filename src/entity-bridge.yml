@@ -1,0 +1,49 @@
+# StegVerse Entity Coordination Bridge
+# Org: AaCT-E
+# Repo: telemetry
+# Tier: production
+
+name: stegverse-entity-bridge
+version: 0.2.1
+
+enabled: true
+
+entities:
+  llm_pool:
+    - provider: openai
+    - provider: anthropic
+    - provider: local_stegverse
+
+  sandbox_pool:
+    - type: deterministic
+    - type: experimental
+    - type: production
+
+  ai_agents:
+    - type: governance
+    - type: derivation
+    - type: verification
+
+routing:
+  coordinator:
+    action: decompose_task
+    strategy: parallel_where_safe
+
+  llm_to_sandbox:
+    action: route_proof_task
+    cost_model: per_compute_unit
+    billing: true
+
+  cost_meter:
+    action: record_cost
+    unit: stegverse_compute_unit
+    rate_card:
+      llm_inference: 1.0
+      sandbox_deterministic: 2.5
+      sandbox_experimental: 1.0
+      governance_check: 0.1
+      stegdb_write: 0.01
+
+  log:
+    action: stegdb_write
+    table: "AaCT-E_entity_bridge"
