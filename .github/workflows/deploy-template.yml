@@ -1,0 +1,91 @@
+# StegVerse CI/CD Deployment Template
+# Org: AaCT-E
+# Repo: telemetry
+# Tier: production
+
+name: stegverse-deploy-template
+version: 0.2.1
+
+triggers:
+  - push: main
+  - workflow_dispatch:
+      inputs:
+        org_name:
+          required: true
+        repo_name:
+          required: true
+        tier:
+          required: true
+
+jobs:
+  1_validate_manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load Manifest
+        run: |
+          cp manifest_AaCT-E.yml manifest.yml
+
+      - name: Validate Schema
+        run: |
+          python scripts/validate_manifest.py manifest.yml
+
+  2_tvc_auth:
+    needs: validate_manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: TV/TVC Ephemeral Auth
+        uses: StegVerse-Labs/TV@v2
+        with:
+          ephemeral: true
+          scope: deployment
+
+  3_build:
+    needs: tvc_auth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Core Wiring
+        run: |
+          python scripts/instantiate.py \
+            --manifest manifest.yml \
+            --templates-dir ./templates/ \
+            --output ./dist/
+
+      - name: iOS Path Fix
+        run: |
+          find ./dist -name ".*" -type f -exec rename 's/^\.//' {} \;
+          find ./dist -name "*.yml" -exec sh -c 'mv "$1" "${1%.yml}_yml.txt"' _ {} \;
+
+  4_test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deterministic Gate Tests
+        run: |
+          python tests/test_governance.py --tier production --seed 42
+
+      - name: StegDB Integration Test
+        run: |
+          python tests/test_stegdb.py --org AaCT-E --repo telemetry
+
+      - name: TV/TVC Auth Test
+        run: |
+          python tests/test_tvc.py --ephemeral
+
+  5_deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Target Repo
+        run: |
+          python scripts/deploy.py \
+            --org AaCT-E \
+            --repo telemetry \
+            --tier production \
+            --artifact ./dist/
+
+      - name: Verify Deployment
+        run: |
+          python scripts/health_check.py --org AaCT-E --repo telemetry

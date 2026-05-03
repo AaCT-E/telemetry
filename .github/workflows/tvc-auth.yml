@@ -1,0 +1,43 @@
+# StegVerse TV/TVC Authentication Workflow
+# Org: AaCT-E
+# Repo: telemetry
+
+name: stegverse-tvc-auth
+version: 0.2.1
+
+principles:
+  - ephemeral_artifacts_only
+  - no_hardcoded_secrets_in_files
+  - no_long_lived_tokens
+  - platform_agnostic_operations
+  - ios_compatible_paths
+
+workflow:
+  1_request:
+    action: tvc_request_token
+    source: TrustVaultController
+
+  2_validate:
+    action: tvc_validate_token
+    ephemeral: true
+    lifetime: 300
+
+  3_bind:
+    action: bind_to_task
+    scope: single_operation
+
+  4_revoke:
+    action: tvc_revoke_token
+    trigger: on_completion | on_timeout | on_error
+
+  5_audit:
+    action: stegdb_write
+    table: "AaCT-E_tvc_audit_log"
+
+file_constraints:
+  no_hidden_files: true
+  extension_policy: "use .txt for .yml configs in bundles"
+  bundle_naming:
+    original: "config.yml"
+    ios_bundle: "config_yml.txt"
+    restore_on_deploy: true

@@ -1,0 +1,40 @@
+# StegVerse Ingestion Pipeline Worker
+# Org: AaCT-E
+# Repo: telemetry
+# Tier: production
+
+name: stegverse-ingest-worker
+version: 0.2.1
+
+triggers:
+  - webhook: /ingest
+  - queue: stegverse-ingest-queue
+  - schedule: "*/5 * * * *"
+
+steps:
+  1_validate:
+    action: validate_input
+    schema: stegverse-input-v2
+    reject_on_fail: true
+
+  2_auth:
+    action: tvc_authenticate
+    source: TrustVaultController
+    ephemeral: true
+
+  3_classify:
+    action: classify_payload
+    routes:
+      - telemetry → stegdb_telemetry
+      - entity_task → entity_coordination
+      - governance_check → governance_core
+      - cost_event → cost_accounting
+
+  4_log:
+    action: stegdb_write
+    table: "AaCT-E_ingestion_log"
+    org_segregated: true
+
+  5_emit:
+    action: route_to_core
+    target: enabled_modules
