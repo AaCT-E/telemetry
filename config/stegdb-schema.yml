@@ -1,0 +1,57 @@
+# StegVerse StegDB Unified Telemetry Schema
+# Org: AaCT-E
+# Repo: telemetry
+
+namespace: stegverse_telemetry
+version: 0.2.1
+
+tables:
+  AaCT-E_ingestion_log:
+    columns:
+      - id: uuid
+      - timestamp: datetime
+      - source: string
+      - payload_hash: string
+      - org: string
+      - repo: string
+      - tier: string
+      - classification: string
+      - tvc_auth_status: string
+      - routing_decision: string
+    indexes:
+      - timestamp DESC
+      - org, repo, timestamp
+      - payload_hash
+
+  AaCT-E_state_transitions:
+    columns:
+      - id: uuid
+      - timestamp: datetime
+      - entity_id: string
+      - repo: string
+      - from_state: string
+      - to_state: string
+      - gate_result: string
+      - confidence: float
+      - deterministic_seed: string
+      - policy_strictness_applied: float
+    indexes:
+      - entity_id, timestamp
+      - gate_result, timestamp
+      - repo, timestamp
+
+  AaCT-E_entity_bridge:
+    columns:
+      - id: uuid
+      - timestamp: datetime
+      - source_entity: string
+      - target_entity: string
+      - repo: string
+      - task_type: string
+      - cost_units: float
+      - routing_path: string
+      - completion_status: string
+    indexes:
+      - source_entity, timestamp
+      - cost_units DESC
+      - repo, timestamp
