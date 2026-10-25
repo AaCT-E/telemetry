@@ -1,0 +1,68 @@
+{
+ "schema": "stegverse.workflow-surface-registry/v1",
+ "goal_id": "G17-WORKFLOW-SURFACE-MINIMIZATION",
+ "repository": "AaCT-E/telemetry",
+ "policy_issue": "StegVerse-Labs/.github#167, #168; StegVerse-org/.github#166",
+ "preferred_repository_workflow_count_max": 2,
+ "exception_repository_workflow_count_max": 3,
+ "credential_authority": "the SKAP Vault inside KV is the only PII and credential store for every user, including the StegVerse ecosystem's own; no secret or token is referenced, introduced or moved by this fold",
+ "invariants": [
+  "Every workflow file is registered in surfaces[]; an unregistered or changed one fails closed (tests/test_workflow_surface_registry.py).",
+  "A new check is a group in tools/tasks/task_catalog.json, never a new workflow file.",
+  "The stable dispatcher carries no workflow_dispatch, schedule, repository_dispatch, issues or workflow_run trigger; a kept surface is pinned by sha256 and unchanged by the fold."
+ ],
+ "unregistered_workflow_outcome": {
+  "disposition": "FAIL_CLOSED",
+  "failure_code": "UNREGISTERED_WORKFLOW_SURFACE",
+  "failed_predicate": "EVERY_WORKFLOW_FILE_IS_REGISTERED",
+  "required_evidence_or_repair": "register the file in control/workflow-surface-registry.json surfaces[] or fold it into tools/tasks/task_catalog.json",
+  "retry_entrypoint": "tests/test_workflow_surface_registry.py",
+  "owning_existing_goal": "G17-WORKFLOW-SURFACE-MINIMIZATION (StegVerse-Labs/.github#167/#168); StegVerse-org/.github#166",
+  "next_attempt": "the next pull request touching .github/workflows/"
+ },
+ "surfaces": [
+  {
+   "path": ".github/workflows/validation-dispatcher.yml",
+   "classification": "KEEP_STABLE_DISPATCHER",
+   "triggers": [
+    "pull_request",
+    "push"
+   ],
+   "permissions": {
+    "contents": "read"
+   }
+  }
+ ],
+ "folded": [
+  {
+   "workflow": ".github/workflows/deploy-template.yml",
+   "name": "stegverse-deploy-template",
+   "triggers_before": [],
+   "classification": "ELIMINATE",
+   "status": "DONE",
+   "reason": "Not a GitHub Actions workflow: the file has no 'on:' trigger key and no runnable jobs schema, so GitHub registers it as an invalid workflow file and records a failed run on every push (e.g. the 2026-09-01 push runs); it declares no check that ever ran. Kept verbatim as a record. Its jobs name scripts/validate_manifest.py, scripts/instantiate.py, tests/test_*.py and scripts/deploy.py, none of which exist in this repository, and an unpinned StegVerse-Labs/TV@v2 credential action; no check is lost.",
+   "verbatim_record": "tools/tasks/folded/deploy-template.yml",
+   "verbatim_sha256": "68bae63d93e6d54b761428461bdabcd2f36bc68b1783252e9cb55b53a9ddb599"
+  },
+  {
+   "workflow": ".github/workflows/ingest-worker.yml",
+   "name": "stegverse-ingest-worker",
+   "triggers_before": [],
+   "classification": "ELIMINATE",
+   "status": "DONE",
+   "reason": "Not a GitHub Actions workflow: the file has no 'on:' trigger key and no runnable jobs schema, so GitHub registers it as an invalid workflow file and records a failed run on every push (e.g. the 2026-09-01 push runs); it declares no check that ever ran. Kept verbatim as a record. Pseudo-config (webhook/queue/schedule triggers, action: steps); not executable by GitHub Actions.",
+   "verbatim_record": "tools/tasks/folded/ingest-worker.yml",
+   "verbatim_sha256": "66229ae9bc050309c3a4dbdadee7af7b0de25635371726e4c1e84af4da83dbca"
+  },
+  {
+   "workflow": ".github/workflows/tvc-auth.yml",
+   "name": "stegverse-tvc-auth",
+   "triggers_before": [],
+   "classification": "ELIMINATE",
+   "status": "DONE",
+   "reason": "Not a GitHub Actions workflow: the file has no 'on:' trigger key and no runnable jobs schema, so GitHub registers it as an invalid workflow file and records a failed run on every push (e.g. the 2026-09-01 push runs); it declares no check that ever ran. Kept verbatim as a record. Pseudo-config describing a TV/TVC token lifecycle; not executable by GitHub Actions; no credential is referenced or moved.",
+   "verbatim_record": "tools/tasks/folded/tvc-auth.yml",
+   "verbatim_sha256": "b347f7c3fecc1aed8e663b1a9b997c2a812e9f68a3dd8b6a7af737b7a516d101"
+  }
+ ]
+}
